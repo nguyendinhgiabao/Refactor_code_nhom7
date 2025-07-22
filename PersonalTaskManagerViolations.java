@@ -8,69 +8,35 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.HashMap;
-import java.util.Map;
-import java.io.File;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
-/**
- * Để tránh lỗi import, ta sẽ sử dụng ArrayList<Map<String, Object>> thay cho JSONArray/JSONObject.
- * Dữ liệu sẽ được lưu/đọc dưới dạng JSON thủ công (chỉ mô phỏng, không dùng thư viện ngoài).
- */
 public class PersonalTaskManagerViolations {
 
     private static final String DB_FILE_PATH = "tasks_database.json";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
-    // Phương thức trợ giúp để tải dữ liệu (giả lập JSON, không dùng thư viện ngoài)
-    private static List<Map<String, Object>> loadTasksFromDb() {
-        List<Map<String, Object>> tasks = new ArrayList<>();
-        File file = new File(DB_FILE_PATH);
-        if (!file.exists()) {
-            return tasks;
-        }
-        try (BufferedReader reader = new BufferedReader(new FileReader(DB_FILE_PATH))) {
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
+    // Phương thức trợ giúp để tải dữ liệu (sẽ được gọi lặp lại)
+    private static JSONArray loadTasksFromDb() {
+        JSONParser parser = new JSONParser();
+        try (FileReader reader = new FileReader(DB_FILE_PATH)) {
+            Object obj = parser.parse(reader);
+            if (obj instanceof JSONArray) {
+                return (JSONArray) obj;
             }
-            String content = sb.toString().trim();
-            if (content.isEmpty() || content.equals("[]")) {
-                return tasks;
-            }
-            // Đơn giản hóa: mỗi dòng là 1 task dạng key1:value1;key2:value2;...
-            String[] items = content.split("\\|\\|\\|");
-            for (String item : items) {
-                Map<String, Object> task = new HashMap<>();
-                String[] pairs = item.split(";");
-                for (String pair : pairs) {
-                    String[] kv = pair.split(":", 2);
-                    if (kv.length == 2) {
-                        task.put(kv[0], kv[1]);
-                    }
-                }
-                tasks.add(task);
-            }
-        } catch (IOException e) {
+        } catch (IOException | ParseException e) {
             System.err.println("Lỗi khi đọc file database: " + e.getMessage());
         }
-        return tasks;
+        return new JSONArray();
     }
 
     // Phương thức trợ giúp để lưu dữ liệu
-    private static void saveTasksToDb(List<Map<String, Object>> tasksData) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(DB_FILE_PATH))) {
-            StringBuilder sb = new StringBuilder();
-            for (Map<String, Object> task : tasksData) {
-                List<String> pairs = new ArrayList<>();
-                for (Map.Entry<String, Object> entry : task.entrySet()) {
-                    pairs.add(entry.getKey() + ":" + entry.getValue());
-                }
-                sb.append(String.join(";", pairs)).append("|||");
-            }
-            writer.write(sb.toString());
+    private static void saveTasksToDb(JSONArray tasksData) {
+        try (FileWriter file = new FileWriter(DB_FILE_PATH)) {
+            file.write(tasksData.toJSONString());
+            file.flush();
         } catch (IOException e) {
             System.err.println("Lỗi khi ghi vào file database: " + e.getMessage());
         }
@@ -78,8 +44,15 @@ public class PersonalTaskManagerViolations {
 
     /**
      * Chức năng thêm nhiệm vụ mới
+     *
+     * @param title Tiêu đề nhiệm vụ.
+     * @param description Mô tả nhiệm vụ.
+     * @param dueDateStr Ngày đến hạn (định dạng YYYY-MM-DD).
+     * @param priorityLevel Mức độ ưu tiên ("Thấp", "Trung bình", "Cao").
+     * @param isRecurring Boolean có phải là nhiệm vụ lặp lại không.
+     * @return JSONObject của nhiệm vụ đã thêm, hoặc null nếu có lỗi.
      */
-    public Map<String, Object> addNewTaskWithViolations(String title, String description,
+    public JSONObject addNewTaskWithViolations(String title, String description,
                                                 String dueDateStr, String priorityLevel,
                                                 boolean isRecurring) {
 
@@ -112,10 +85,11 @@ public class PersonalTaskManagerViolations {
         }
 
         // Tải dữ liệu
-        List<Map<String, Object>> tasks = loadTasksFromDb();
+        JSONArray tasks = loadTasksFromDb();
 
         // Kiểm tra trùng lặp
-        for (Map<String, Object> existingTask : tasks) {
+        for (Object obj : tasks) {
+            JSONObject existingTask = (JSONObject) obj;
             if (existingTask.get("title").toString().equalsIgnoreCase(title) &&
                 existingTask.get("due_date").toString().equals(dueDate.format(DATE_FORMATTER))) {
                 System.out.println(String.format("Lỗi: Nhiệm vụ '%s' đã tồn tại với cùng ngày đến hạn.", title));
@@ -123,9 +97,9 @@ public class PersonalTaskManagerViolations {
             }
         }
 
-        String taskId = UUID.randomUUID().toString();
+        String taskId = UUID.randomUUID().toString(); // YAGNI: Có thể dùng số nguyên tăng dần đơn giản hơn.
 
-        Map<String, Object> newTask = new HashMap<>();
+        JSONObject newTask = new JSONObject();
         newTask.put("id", taskId);
         newTask.put("title", title);
         newTask.put("description", description);
@@ -134,8 +108,9 @@ public class PersonalTaskManagerViolations {
         newTask.put("status", "Chưa hoàn thành");
         newTask.put("created_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
         newTask.put("last_updated_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-        newTask.put("is_recurring", isRecurring);
+        newTask.put("is_recurring", isRecurring); // YAGNI: Thêm thuộc tính này dù chưa có chức năng xử lý nhiệm vụ lặp lại
         if (isRecurring) {
+
             newTask.put("recurrence_pattern", "Chưa xác định");
         }
 
