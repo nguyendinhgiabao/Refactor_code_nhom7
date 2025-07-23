@@ -108,11 +108,12 @@ public class PersonalTaskManagerViolations {
         newTask.put("status", "Chưa hoàn thành");
         newTask.put("created_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
         newTask.put("last_updated_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
-        newTask.put("is_recurring", isRecurring); // YAGNI: Thêm thuộc tính này dù chưa có chức năng xử lý nhiệm vụ lặp lại
-        if (isRecurring) {
-
-            newTask.put("recurrence_pattern", "Chưa xác định");
-        }
+        // Sử lý YAGNI
+        // TODO: Thêm logic xử lý nhiệm vụ lặp lại trong tương lai khi phát triển tính năng này
+        // newTask.put("is_recurring", isRecurring);
+        // if (is_recurring) {
+        //     newTask.put("recurrence_pattern", "Chưa xác định");
+        // }
 
         tasks.add(newTask);
 
