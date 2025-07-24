@@ -127,7 +127,7 @@ public class PersonalTaskManagerViolations {
         // TODO: Thêm logic xử lý nhiệm vụ lặp lại trong tương lai khi phát triển tính năng này
         // newTask.put("is_recurring", isRecurring);
         // if (is_recurring) {
-        //     newTask.put("recurrence_pattern", "Chưa xác định");
+        //     newTask.put("recurrence_pattern", "Chưa xác định")
         // }
 
         tasks.add(newTask);
