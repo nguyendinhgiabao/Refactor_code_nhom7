@@ -112,23 +112,8 @@ public class PersonalTaskManagerViolations {
             return null;
         }
         //thay đổi
-        String taskId = generateSimpleId(tasks);
-        // String taskId = UUID.randomUUID().toString(); // YAGNI: Có thể dùng số nguyên tăng dần đơn giản hơn.
-
-        // sửa YAGNI
-        private String generateSimpleId(JSONArray tasks) {
-            int maxId = 0;
-            for (Object obj : tasks) {
-                JSONObject task = (JSONObject) obj;
-                try {
-                    int id = Integer.parseInt(task.get("id").toString());
-                    if (id > maxId) maxId = id;
-                } catch (NumberFormatException e) {
-                    // Bỏ qua nếu ID không phải số
-                }
-            }
-            return String.valueOf(maxId + 1);
-        }
+        String taskId = UUID.randomUUID().toString();
+        
         JSONObject newTask = new JSONObject();
         newTask.put("id", taskId);
         newTask.put("title", title);
