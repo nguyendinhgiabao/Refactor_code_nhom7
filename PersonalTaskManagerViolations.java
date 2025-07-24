@@ -111,9 +111,24 @@ public class PersonalTaskManagerViolations {
             System.out.println(String.format("Lỗi: Nhiệm vụ '%s' đã tồn tại với cùng ngày đến hạn.", title));
             return null;
         }
+        //thay đổi
+        String taskId = generateSimpleId(tasks);
+        // String taskId = UUID.randomUUID().toString(); // YAGNI: Có thể dùng số nguyên tăng dần đơn giản hơn.
 
-        String taskId = UUID.randomUUID().toString(); // YAGNI: Có thể dùng số nguyên tăng dần đơn giản hơn.
-
+        // sửa YAGNI
+        private String generateSimpleId(JSONArray tasks) {
+            int maxId = 0;
+            for (Object obj : tasks) {
+                JSONObject task = (JSONObject) obj;
+                try {
+                    int id = Integer.parseInt(task.get("id").toString());
+                    if (id > maxId) maxId = id;
+                } catch (NumberFormatException e) {
+                    // Bỏ qua nếu ID không phải số
+                }
+            }
+            return String.valueOf(maxId + 1);
+        }
         JSONObject newTask = new JSONObject();
         newTask.put("id", taskId);
         newTask.put("title", title);
@@ -123,13 +138,15 @@ public class PersonalTaskManagerViolations {
         newTask.put("status", "Chưa hoàn thành");
         newTask.put("created_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
         newTask.put("last_updated_at", LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME));
+        
+        /* sửa YAGNI
         newTask.put("is_recurring", isRecurring); // YAGNI: Thêm thuộc tính này dù chưa có chức năng xử lý nhiệm vụ lặp
                                                   // lại
         if (isRecurring) {
 
             newTask.put("recurrence_pattern", "Chưa xác định");
         }
-
+        */
         tasks.add(newTask);
 
         // Lưu dữ liệu
