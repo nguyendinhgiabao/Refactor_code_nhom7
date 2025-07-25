@@ -151,7 +151,7 @@ public class PersonalTaskManagerViolations {
         // Sửa KISS: thay vì dùng hàm generateSimpleId phức tạp hoặc UUID, dùng ID tăng
         // dần đơn giản
         String taskId = String.valueOf(tasks.size() + 1);
-
+        LocalDate dueDate = LocalDate.parse(dueDateStr, DATE_FORMATTER);
         Map<String, Object> newTask = new HashMap<>();
         newTask.put("id", taskId);
         newTask.put("title", title);
