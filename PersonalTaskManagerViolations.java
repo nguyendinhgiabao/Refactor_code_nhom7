@@ -24,6 +24,7 @@ public class PersonalTaskManagerViolations {
 
     private static final String DB_FILE_PATH = "tasks_database.json";
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final String[] VALID_PRIORITIES = { "Thấp", "Trung bình", "Cao" };
 
     // Phương thức trợ giúp để tải dữ liệu (giả lập JSON, không dùng thư viện ngoài)
     private static List<Map<String, Object>> loadTasksFromDb() {
